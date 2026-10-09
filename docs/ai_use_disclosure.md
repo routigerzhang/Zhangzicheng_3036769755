@@ -65,7 +65,8 @@ workflow:
 ## Remaining researcher responsibilities
 
 Before submission, the researcher should verify the final interpretation
-against the original paper, confirm the definitions of the regional indicators
-that are not fully documented in the supplied data dictionary, add the final
-bibliographic references, decide whether the course data may be redistributed,
-and manually review the final report formatting.
+against the original paper, confirm the definitions of `NORTHJ` and `SHORE`
+that are not fully documented in the supplied data dictionary, note that
+`PA1` and `PA2` are defined in that dictionary, add the final bibliographic
+references, decide whether the course data may be redistributed, and manually
+review the final report formatting.
