@@ -27,9 +27,12 @@ The workflow creates:
 - `outputs/tables/extension_ownership_heterogeneity.csv`: GAP interacted with company ownership;
 - `outputs/tables/robustness_checks.csv`: alternative part-time weights, sample exclusions, leave-one-chain-out estimates, closure coding, and permutation inference;
 - `outputs/figures/figure1.png`: starting-wage distributions;
+- `outputs/Card_Krueger_Empirical_Report.pdf`: formatted empirical report for submission;
+- `outputs/Card_Krueger_Empirical_Report.docx`: editable version of the formatted report;
 - `outputs/tables/validation_checks.csv`: sample counts and headline checks;
 - `docs/report_draft.md`: automatically generated empirical-report draft populated from the current run;
 - `docs/ai_use_disclosure.md`: completed AI-use disclosure draft for final researcher review;
+- `docs/course_requirements.md`: requirements confirmed from the supplied course materials and items requiring confirmation;
 - `docs/submission_checklist.md`: course-deliverable checklist separating completed and remaining tasks;
 - `data/processed/analysis_panel.csv`: locally generated derived analysis data.
 
