@@ -2,20 +2,28 @@
 
 The course data dictionary defines the core variables and `STATUS2` codes. It
 also defines `PA1` as the northeastern Philadelphia suburbs and `PA2` as the
-Easton area. The supplied CSV contains `NORTHJ` and `SHORE`, but those two
-fields are not defined in the supplied data dictionary. The core replication
-does not use `SHORE` as a control. The code uses `SOUTHJ`, `CENTRALJ`,
-`NORTHJ`, and `PA1` as region controls in the published-style specifications,
-with the `PA2`/Easton category as the omitted reference group. `SHORE` is used
-only for an explicitly labelled geographic-exclusion robustness check.
+Easton area. The original paper documents the regional construction used in
+the geographic specifications: New Jersey is divided into North, Central, and
+South, while eastern Pennsylvania is divided into the Allentown--Easton area
+and the northern suburbs of Philadelphia. Accordingly, `NORTHJ=1` identifies a
+store in northern New Jersey; together with `SOUTHJ` and `CENTRALJ`, it forms
+the three New Jersey region indicators. For Pennsylvania stores these New
+Jersey indicators are zero. The published-style specifications use `SOUTHJ`,
+`CENTRALJ`, `NORTHJ`, and `PA1`, with the `PA2`/Easton category as the omitted
+reference group.
 
-Before submission, confirm the exact definitions of `NORTHJ` and `SHORE`
-against the original paper or source codebook and reproduce that documentation
-in the empirical report. The definitions of `PA1` and `PA2` are already
-documented in the supplied data dictionary. If the source codebook for
-`NORTHJ` or `SHORE` cannot be recovered, retain the robustness result as a
-data-provided indicator check and state this limitation explicitly rather than
-assigning an unsupported geographic interpretation.
+The original paper also defines the New Jersey shore exclusion used in the
+robustness analysis. `SHORE=1` identifies a store in a town along the New
+Jersey shore; the paper's corresponding robustness row excludes 35 such
+stores because they may have a different seasonal employment pattern. Thus
+`SHORE` is not a core regression control and is used only for the explicitly
+labelled geographic-exclusion robustness check.
+
+The paper supports the economic/geographic interpretation of `NORTHJ` and
+`SHORE`. For full computational reproducibility, any available town-level
+mapping used to construct the public indicators should still be documented;
+the analysis does not infer a town boundary that is absent from the supplied
+data.
 
 The original `SHEET` identifier is duplicated for two observations. The
 workflow preserves the raw value and creates `store_id_unique` for local

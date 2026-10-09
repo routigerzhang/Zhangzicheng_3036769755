@@ -81,6 +81,9 @@ The final report is provided in DOCX format and records the input source,
 sample rules, closure coding, deviations from the original paper, and checks
 used to validate the generated tables and figure. Review
 `docs/ai_use_disclosure.md` against the actual project history before
-submission. Confirm the final report format, regional variable definitions,
-data-redistribution decision, GitHub URL, and clean-checkout reproduction test
-against the course portal.
+submission. Regional variable definitions are documented in
+`docs/replication_notes.md`: `PA1` and `PA2` come from the course data
+dictionary, while the New Jersey region indicators and the `SHORE` exclusion
+are documented from the original paper. Confirm the final report format,
+town-level mapping documentation if available, data-redistribution decision,
+GitHub URL, and clean-checkout reproduction test against the course portal.
