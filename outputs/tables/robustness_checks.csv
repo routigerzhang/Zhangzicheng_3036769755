@@ -1,0 +1,12 @@
+check,specification,sample_n,estimate,standard_error,t_stat,normal_approx_p,permutation_p,note
+Baseline,NJ dummy; published Table 4 model (i),357,2.325831188883181,1.1915962776999331,1.9518617441241035,0.05095462128975843,,Reference specification; conventional homoskedastic OLS SE.
+Alternative part-time weight,NJ dummy; part-time weight=0.4,357,2.3705558414822536,1.196680349003114,1.9809432347218106,0.04759763982831938,,Recomputes both waves and preserves the baseline sample screen.
+Alternative part-time weight,NJ dummy; part-time weight=0.6,357,2.2811065362841068,1.2025406539674575,1.896905962187817,0.05784035042250595,,Recomputes both waves and preserves the baseline sample screen.
+Geographic exclusion,NJ dummy; exclude Shore stores,326,2.562966057742176,1.1898682279457766,2.1539915072503075,0.03124083794287315,,Excludes observations flagged as Shore-area stores; coding follows supplied public data.
+Survey follow-up exclusion,NJ dummy; NCALLS <= 2,294,2.4535287081339776,1.2791388734694629,1.9181097213308569,0.055097100074264625,,Restricts to stores with at most two call attempts in the first survey wave.
+Leave-one-chain-out,NJ dummy; exclude Burger King,209,1.514888434946571,1.3567622516822115,1.1165467148487536,0.2641881856601702,,Tests whether the reduced-form estimate is driven by one restaurant chain.
+Leave-one-chain-out,NJ dummy; exclude KFC,283,3.0607359105728977,1.3815295363790412,2.2154690362936575,0.026727887362936024,,Tests whether the reduced-form estimate is driven by one restaurant chain.
+Leave-one-chain-out,NJ dummy; exclude Roy Rogers,267,2.42222222222222,1.4341899913912395,1.688913070626394,0.09123609006977153,,Tests whether the reduced-form estimate is driven by one restaurant chain.
+Leave-one-chain-out,NJ dummy; exclude Wendy's,312,2.0514229910714334,1.2879550805361952,1.5927752621755993,0.11121061657869571,,Tests whether the reduced-form estimate is driven by one restaurant chain.
+Closure coding,Difference-in-differences; temporary closures set to zero,388,2.5092119275825344,1.3460101548736754,1.8641849903562036,0.062295730444078816,,Table 3 row 5 sensitivity; temporary/renovation/highway/mall-fire closures are coded as zero employment.
+Randomization inference,"NJ dummy; 2,000 state-label permutations",357,2.325831188883181,1.1915962776999331,1.9518617441241035,0.05095462128975843,0.050474762618690654,"Permutation preserves the observed number of NJ stores; seed=20261009. This is a diagnostic, not a replacement for design-based inference."

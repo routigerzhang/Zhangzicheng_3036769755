@@ -25,8 +25,10 @@ The workflow creates:
 - `outputs/tables/table4.csv`: reduced-form employment models;
 - `outputs/tables/replication_comparison.csv`: selected published-versus-replicated coefficients;
 - `outputs/tables/extension_ownership_heterogeneity.csv`: GAP interacted with company ownership;
+- `outputs/tables/robustness_checks.csv`: alternative part-time weights, sample exclusions, leave-one-chain-out estimates, closure coding, and permutation inference;
 - `outputs/figures/figure1.png`: starting-wage distributions;
 - `outputs/tables/validation_checks.csv`: sample counts and headline checks;
+- `docs/report_draft.md`: automatically generated empirical-report draft populated from the current run;
 - `data/processed/analysis_panel.csv`: locally generated derived analysis data.
 
 The processed row-level file is ignored by Git for the same reason as the raw
@@ -61,6 +63,16 @@ differs between company-owned and franchise stores. It estimates `GAP`,
 `CO_OWNED`, and `GAP * CO_OWNED`, controlling for chain and region indicators.
 The interaction is descriptive and should be interpreted with the limited
 sample size and two-wave design in mind.
+
+## Robustness checks
+
+The robustness file treats the published NJ-dummy specification as the
+reference and reports changes in the FTE construction, geographic and survey
+follow-up exclusions, leave-one-chain-out estimates, the temporary-closure
+coding sensitivity, and a randomization-inference diagnostic. The permutation
+test preserves the observed number of New Jersey stores and uses a fixed seed
+for reproducibility; it is reported as a diagnostic rather than as a substitute
+for the difference-in-differences identifying assumption.
 
 ## Reproducibility and AI disclosure
 

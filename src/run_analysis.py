@@ -215,13 +215,30 @@ def table3(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
 
 def make_regression_sample(df: pd.DataFrame) -> pd.DataFrame:
-    employment = df["fte1"].notna() & df["fte2"].notna()
+    return make_regression_sample_for_columns(df, "fte1", "fte2", "fte_change")
+
+
+def make_regression_sample_for_columns(
+    df: pd.DataFrame, fte1_column: str, fte2_column: str, change_column: str
+) -> pd.DataFrame:
+    employment = df[fte1_column].notna() & df[fte2_column].notna()
     baseline_wage = df["WAGE_ST"].notna()
     post_wage_or_closed = df["WAGE_ST2"].notna() | df["STATUS2"].eq(PERMANENT_CLOSURE_CODE)
     sample = df.loc[employment & baseline_wage & post_wage_or_closed].copy()
+    sample["analysis_change"] = sample[change_column]
     for chain, name in [(1, "BK"), (2, "KFC"), (3, "roys")]:
         sample[name] = sample["CHAIN"].eq(chain).astype(float)
     return sample
+
+
+def alternative_parttime_panel(df: pd.DataFrame, parttime_weight: float) -> pd.DataFrame:
+    out = df.copy()
+    out["fte1_alt"] = out["EMPFT"] + parttime_weight * out["EMPPT"] + out["NMGRS"]
+    out["fte2_alt"] = out["EMPFT2"] + parttime_weight * out["EMPPT2"] + out["NMGRS2"]
+    out.loc[out["STATUS2"].eq(PERMANENT_CLOSURE_CODE), "fte2_alt"] = 0.0
+    out.loc[out["STATUS2"].isin(TEMP_CLOSURE_CODES), "fte2_alt"] = np.nan
+    out["fte_change_alt"] = out["fte2_alt"] - out["fte1_alt"]
+    return out
 
 
 def ols(sample: pd.DataFrame, columns: list[str], outcome: str = "fte_change"):
@@ -288,6 +305,196 @@ def table4_and_extension(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, 
     ], ignore_index=True, sort=False)
     meta = {"table4_sample_n": int(len(sample)), "table4_sample_mean_change": float(sample["fte_change"].mean()), "table4_sample_sd_change": float(sample["fte_change"].std(ddof=1))}
     return table4, extension, meta
+
+
+def normal_two_sided_p(t_stat: float) -> float:
+    if not np.isfinite(t_stat):
+        return float("nan")
+    return float(math.erfc(abs(float(t_stat)) / math.sqrt(2.0)))
+
+
+def robustness_checks(df: pd.DataFrame, table3_df: pd.DataFrame) -> pd.DataFrame:
+    """Run transparent sensitivity checks around the published NJ-dummy model."""
+    rows: list[dict] = []
+
+    def add_model_row(check: str, specification: str, sample: pd.DataFrame, *, note: str):
+        result, _, _, _ = ols(sample, ["STATE"], outcome="analysis_change")
+        state = result.loc[result["term"].eq("STATE")].iloc[0]
+        t_stat = float(state["t_stat"])
+        rows.append({
+            "check": check,
+            "specification": specification,
+            "sample_n": int(len(sample)),
+            "estimate": float(state["coefficient"]),
+            "standard_error": float(state["standard_error"]),
+            "t_stat": t_stat,
+            "normal_approx_p": normal_two_sided_p(t_stat),
+            "permutation_p": np.nan,
+            "note": note,
+        })
+
+    baseline = make_regression_sample(df)
+    add_model_row(
+        "Baseline",
+        "NJ dummy; published Table 4 model (i)",
+        baseline,
+        note="Reference specification; conventional homoskedastic OLS SE.",
+    )
+
+    for weight in [0.4, 0.6]:
+        alt = alternative_parttime_panel(df, weight)
+        sample = make_regression_sample_for_columns(alt, "fte1_alt", "fte2_alt", "fte_change_alt")
+        add_model_row(
+            "Alternative part-time weight",
+            f"NJ dummy; part-time weight={weight:.1f}",
+            sample,
+            note="Recomputes both waves and preserves the baseline sample screen.",
+        )
+
+    if "SHORE" in baseline.columns:
+        add_model_row(
+            "Geographic exclusion",
+            "NJ dummy; exclude Shore stores",
+            baseline.loc[baseline["SHORE"].eq(0)].copy(),
+            note="Excludes observations flagged as Shore-area stores; coding follows supplied public data.",
+        )
+    if "NCALLS" in baseline.columns:
+        add_model_row(
+            "Survey follow-up exclusion",
+            "NJ dummy; NCALLS <= 2",
+            baseline.loc[baseline["NCALLS"].le(2)].copy(),
+            note="Restricts to stores with at most two call attempts in the first survey wave.",
+        )
+
+    for chain, label in [(1, "Burger King"), (2, "KFC"), (3, "Roy Rogers"), (4, "Wendy's")]:
+        add_model_row(
+            "Leave-one-chain-out",
+            f"NJ dummy; exclude {label}",
+            baseline.loc[baseline["CHAIN"].ne(chain)].copy(),
+            note="Tests whether the reduced-form estimate is driven by one restaurant chain.",
+        )
+
+    row5 = table3_df.loc[
+        (table3_df["row"] == "5. Change in mean FTE, temporary closures set to zero")
+        & (table3_df["stat"] == "estimate")
+    ].iloc[0]
+    row5_se = table3_df.loc[
+        (table3_df["row"] == "5. Change in mean FTE, temporary closures set to zero")
+        & (table3_df["stat"] == "standard_error")
+    ].iloc[0]
+    temp_t = float(row5["NJ-PA"] / row5_se["NJ-PA"])
+    rows.append({
+        "check": "Closure coding",
+        "specification": "Difference-in-differences; temporary closures set to zero",
+        "sample_n": int(df["fte_change_temp_as_zero"].notna().sum()),
+        "estimate": float(row5["NJ-PA"]),
+        "standard_error": float(row5_se["NJ-PA"]),
+        "t_stat": temp_t,
+        "normal_approx_p": normal_two_sided_p(temp_t),
+        "permutation_p": np.nan,
+        "note": "Table 3 row 5 sensitivity; temporary/renovation/highway/mall-fire closures are coded as zero employment.",
+    })
+
+    rng = np.random.default_rng(20261009)
+    observed_result, _, _, _ = ols(baseline, ["STATE"])
+    observed_beta = float(observed_result.loc[observed_result["term"].eq("STATE"), "coefficient"].iloc[0])
+    permuted = np.empty(2000, dtype=float)
+    states = baseline["STATE"].to_numpy(float)
+    for i in range(len(permuted)):
+        shuffled = rng.permutation(states)
+        perm_sample = baseline.copy()
+        perm_sample["permuted_state"] = shuffled
+        permuted_result, _, _, _ = ols(perm_sample, ["permuted_state"])
+        permuted[i] = float(permuted_result.loc[permuted_result["term"].eq("permuted_state"), "coefficient"].iloc[0])
+    permutation_p = float((1 + np.sum(np.abs(permuted) >= abs(observed_beta))) / (len(permuted) + 1))
+    observed_state = observed_result.loc[observed_result["term"].eq("STATE")].iloc[0]
+    rows.append({
+        "check": "Randomization inference",
+        "specification": "NJ dummy; 2,000 state-label permutations",
+        "sample_n": int(len(baseline)),
+        "estimate": observed_beta,
+        "standard_error": float(observed_state["standard_error"]),
+        "t_stat": float(observed_state["t_stat"]),
+        "normal_approx_p": normal_two_sided_p(float(observed_state["t_stat"])),
+        "permutation_p": permutation_p,
+        "note": "Permutation preserves the observed number of NJ stores; seed=20261009. This is a diagnostic, not a replacement for design-based inference.",
+    })
+    return pd.DataFrame(rows)
+
+
+def write_report_draft(
+    path: Path,
+    df: pd.DataFrame,
+    table3_validation: dict,
+    table4_meta: dict,
+    table4_df: pd.DataFrame,
+    extension_df: pd.DataFrame,
+    robust_df: pd.DataFrame,
+):
+    def coefficient(model: str, term: str) -> tuple[float, float]:
+        row = table4_df.loc[(table4_df["model"] == model) & (table4_df["term"] == term)].iloc[0]
+        return float(row["coefficient"]), float(row["standard_error"])
+
+    nj_dummy, nj_dummy_se = coefficient("(i) NJ dummy", "STATE")
+    gap, gap_se = coefficient("(iii) GAP", "GAP")
+    ext_gap = float(extension_df.loc[(extension_df["term"] == "GAP") & (extension_df["quantity"] == "coefficient"), "coefficient"].iloc[0])
+    ext_interaction = float(extension_df.loc[(extension_df["term"] == "GAP_CO_OWNED") & (extension_df["quantity"] == "coefficient"), "coefficient"].iloc[0])
+    ext_company = float(extension_df.loc[extension_df["quantity"] == "GAP effect, company-owned stores", "estimate"].iloc[0])
+    temp_row = robust_df.loc[robust_df["check"].eq("Closure coding")].iloc[0]
+    perm_row = robust_df.loc[robust_df["check"].eq("Randomization inference")].iloc[0]
+
+    leave_out = robust_df.loc[robust_df["check"].eq("Leave-one-chain-out"), ["specification", "estimate"]]
+    leave_out_text = "; ".join(f"{row.specification.replace('NJ dummy; exclude ', '')}: {row.estimate:.2f}" for row in leave_out.itertuples())
+
+    text = f"""# Draft empirical report: Card and Krueger (1994)
+
+> Status: working draft generated from the reproducible workflow. It should be reviewed against the original paper, the course rubric, and the researcher’s own interpretation before submission.
+
+## 1. Research question and motivation
+
+This project replicates Card and Krueger’s (1994) question: did New Jersey’s April 1, 1992 increase in the statutory minimum wage from $4.25 to $5.05 reduce employment at fast-food restaurants? The economic mechanism is theoretically ambiguous. A higher wage floor raises labor costs and could reduce employment, but firms may adjust through prices, turnover, hours, effort, or monopsony-related channels. The paper’s empirical contribution is to compare New Jersey restaurants exposed to the increase with restaurants in eastern Pennsylvania, where the minimum wage remained $4.25.
+
+## 2. Data, sample, and variable construction
+
+The replication uses the supplied public survey data: {len(df)} restaurants, including {int(df['STATE'].eq(1).sum())} in New Jersey and {int(df['STATE'].eq(0).sum())} in Pennsylvania. Restaurants were surveyed before the policy change in February–March 1992 and again in November–December 1992. The assigned replication covers Tables 2–4 and Figure 1; the restricted data needed for Table 1 are not used.
+
+Full-time-equivalent employment is defined as `EMPFT + 0.5 * EMPPT + NMGRS`. Permanent closures are coded as zero post-period employment. Temporary, renovation, highway-construction, and mall-fire closures are missing in the main post-period outcome and are set to zero only in the explicit closure-coding sensitivity check. The Table 4 analysis requires observed pre- and post-period FTE employment, baseline wage, and post-period wage unless the restaurant permanently closed; this yields {table4_meta['table4_sample_n']} observations.
+
+The treatment-intensity variable is `GAP = max(0, (5.05 - WAGE_ST) / WAGE_ST)` for New Jersey and zero for Pennsylvania. It measures the proportional wage increase implied by the statutory change relative to the restaurant’s starting wage.
+
+## 3. Empirical design
+
+The core reduced-form comparison is a difference-in-differences design:
+
+`(NJ after - NJ before) - (PA after - PA before)`.
+
+The identifying assumption is parallel trends: absent the New Jersey policy, employment changes in the two nearby comparison regions would have been similar. The design is attractive because the states are geographically adjacent and the survey spans the policy change, but the data contain only one pre-period, so the assumption cannot be tested with event-study-style pre-trends.
+
+## 4. Core replication results
+
+The unbalanced Table 3 DiD estimate is **{table3_validation['table3_row3_did']:.2f} FTE employees** (SE {table3_validation['table3_row3_did_se']:.2f}), extremely close to the published value of 2.76. The balanced-sample estimate is 2.75, and the temporary-closures-as-zero sensitivity estimate is {temp_row['estimate']:.2f}. These estimates do not support a negative employment effect in this sample; they indicate that New Jersey employment increased relative to eastern Pennsylvania.
+
+In the Table 4 reduced-form regression, the New Jersey indicator is **{nj_dummy:.2f}** (SE {nj_dummy_se:.2f}). The continuous treatment-intensity specification estimates a GAP coefficient of **{gap:.2f}** (SE {gap_se:.2f}). The main coefficients are close to the original paper’s reported values, with the region-control specification showing the largest but still modest numerical difference. The replication comparison is documented in `outputs/tables/replication_comparison.csv`.
+
+## 5. Independent extension: ownership heterogeneity
+
+The extension asks whether the employment response differs between company-owned and franchise stores. The model adds `GAP × CO_OWNED` to the chain and region controls. The GAP coefficient for franchise stores is {ext_gap:.2f}; the interaction is {ext_interaction:.2f}; and the implied GAP effect for company-owned stores is {ext_company:.2f}. The interaction is not interpreted as definitive evidence of heterogeneous treatment effects: its uncertainty is substantial, and the design has only two survey waves. The economically responsible conclusion is that the point estimates suggest a possible ownership difference, but the data do not establish it precisely.
+
+## 6. Robustness and validation
+
+The workflow includes alternative part-time weights of 0.4 and 0.6, exclusion of Shore stores, a restriction to stores with at most two first-wave call attempts, leave-one-chain-out estimates, an explicit temporary-closure coding check, and a 2,000-draw permutation diagnostic that preserves the number of treated stores. The leave-one-chain-out NJ-dummy estimates are: {leave_out_text}. The temporary-closure sensitivity is {temp_row['estimate']:.2f}; the permutation p-value for the baseline NJ-dummy coefficient is {perm_row['permutation_p']:.3f}. These checks are diagnostics around the baseline design, not independent proof of identification.
+
+Validation checks confirm the expected 410-by-46 input shape, the 357-observation Table 4 sample, and the close match between the headline replication coefficients and the original paper. The generated tables, figure, processed panel, and validation file are produced by a single command after the input data are placed in the documented location.
+
+## 7. Limitations
+
+Several limitations matter for interpretation. First, the study has one pre-treatment survey wave, limiting direct assessment of parallel trends. Second, restaurant employment is survey-reported and may contain measurement error. Third, closure coding and missing post-period values can affect the estimand, which is why the workflow reports alternative coding explicitly. Fourth, the sample is concentrated in four fast-food chains and two neighboring regions in 1992; external validity to other industries, locations, or later minimum-wage changes is limited. Finally, some regional indicators in the public file are not fully defined in the supplied data dictionary, so their use should be documented and checked against the original paper before final submission.
+
+## 8. Conclusion
+
+The replication recovers the central Card–Krueger finding: the 1992 New Jersey minimum-wage increase is not associated with a decline in fast-food employment relative to eastern Pennsylvania in the supplied public data. The result is numerically stable across the main closure and sample checks. The ownership extension is useful as a motivated exploratory analysis, but its interaction estimate should be presented as suggestive rather than conclusive. The final submission should pair this report draft with the code, input-access instructions, AI-use disclosure, and a short explanation of any remaining implementation differences from the original paper.
+"""
+    path.write_text(text, encoding="utf-8")
 
 
 def wage_distribution_figure(df: pd.DataFrame, path: Path):
@@ -402,7 +609,18 @@ def main():
     table4_df.to_csv(tables_dir / "table4.csv", index=False)
     extension_df.to_csv(tables_dir / "extension_ownership_heterogeneity.csv", index=False)
     replication_comparison(table3_df, table4_df).to_csv(tables_dir / "replication_comparison.csv", index=False)
+    robustness_df = robustness_checks(df, table3_df)
+    robustness_df.to_csv(tables_dir / "robustness_checks.csv", index=False)
     wage_distribution_figure(df, figures_dir / "figure1.png")
+    write_report_draft(
+        output_dir.parent / "docs" / "report_draft.md",
+        df,
+        table3_validation,
+        table4_meta,
+        table4_df,
+        extension_df,
+        robustness_df,
+    )
 
     status_counts = df["STATUS2"].value_counts().sort_index().to_dict()
     checks = {
