@@ -1,5 +1,5 @@
 data/raw/*.csv
 data/processed/*.csv
+outputs/*.pdf
 __pycache__/
 .venv/
-

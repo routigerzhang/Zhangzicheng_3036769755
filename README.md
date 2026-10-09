@@ -27,13 +27,9 @@ The workflow creates:
 - `outputs/tables/extension_ownership_heterogeneity.csv`: GAP interacted with company ownership;
 - `outputs/tables/robustness_checks.csv`: alternative part-time weights, sample exclusions, leave-one-chain-out estimates, closure coding, and permutation inference;
 - `outputs/figures/figure1.png`: starting-wage distributions;
-- `outputs/Card_Krueger_Empirical_Report.pdf`: formatted empirical report for submission;
-- `outputs/Card_Krueger_Empirical_Report.docx`: editable version of the formatted report;
+- `outputs/Card_Krueger_Empirical_Report.docx`: formatted empirical report for submission;
 - `outputs/tables/validation_checks.csv`: sample counts and headline checks;
-- `docs/report_draft.md`: automatically generated empirical-report draft populated from the current run;
 - `docs/ai_use_disclosure.md`: completed AI-use disclosure draft for final researcher review;
-- `docs/course_requirements.md`: requirements confirmed from the supplied course materials and items requiring confirmation;
-- `docs/submission_checklist.md`: course-deliverable checklist separating completed and remaining tasks;
 - `data/processed/analysis_panel.csv`: locally generated derived analysis data.
 
 The processed row-level file is ignored by Git for the same reason as the raw
@@ -81,10 +77,10 @@ for the difference-in-differences identifying assumption.
 
 ## Reproducibility and AI disclosure
 
-The final report should record the input source, sample rules, closure coding,
-any deviations from the original paper, and the checks used to validate the
-generated tables and figure. Review `docs/ai_use_disclosure.md` against the
-actual project history; `docs/ai_use_disclosure_template.md` is retained as a
-reusable starting point. Before submission, use `docs/submission_checklist.md`
-to confirm the final report format, regional variable definitions,
-data-redistribution decision, GitHub URL, and clean-checkout reproduction test.
+The final report is provided in DOCX format and records the input source,
+sample rules, closure coding, deviations from the original paper, and checks
+used to validate the generated tables and figure. Review
+`docs/ai_use_disclosure.md` against the actual project history before
+submission. Confirm the final report format, regional variable definitions,
+data-redistribution decision, GitHub URL, and clean-checkout reproduction test
+against the course portal.
