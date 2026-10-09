@@ -29,6 +29,8 @@ The workflow creates:
 - `outputs/figures/figure1.png`: starting-wage distributions;
 - `outputs/tables/validation_checks.csv`: sample counts and headline checks;
 - `docs/report_draft.md`: automatically generated empirical-report draft populated from the current run;
+- `docs/ai_use_disclosure.md`: completed AI-use disclosure draft for final researcher review;
+- `docs/submission_checklist.md`: course-deliverable checklist separating completed and remaining tasks;
 - `data/processed/analysis_panel.csv`: locally generated derived analysis data.
 
 The processed row-level file is ignored by Git for the same reason as the raw
@@ -78,6 +80,8 @@ for the difference-in-differences identifying assumption.
 
 The final report should record the input source, sample rules, closure coding,
 any deviations from the original paper, and the checks used to validate the
-generated tables and figure. Use `docs/ai_use_disclosure_template.md` as a
-starting point, then revise it to reflect the actual project history after
-reviewing the code and results manually.
+generated tables and figure. Review `docs/ai_use_disclosure.md` against the
+actual project history; `docs/ai_use_disclosure_template.md` is retained as a
+reusable starting point. Before submission, use `docs/submission_checklist.md`
+to confirm the final report format, regional variable definitions,
+data-redistribution decision, GitHub URL, and clean-checkout reproduction test.

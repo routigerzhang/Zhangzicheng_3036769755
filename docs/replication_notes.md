@@ -1,12 +1,25 @@
 # Replication notes
 
 The course data dictionary defines the core variables and `STATUS2` codes.
-The supplied CSV also contains `NORTHJ` and `SHORE`; these fields should be
-documented from the original source codebook before using them in a final
-report. The code uses `SOUTHJ`, `CENTRALJ`, `NORTHJ`, and `PA1` as region
-controls, with the `PA2`/Easton category as the omitted reference group.
+The supplied CSV also contains `NORTHJ` and `SHORE`, but their definitions are
+not fully documented in the course data dictionary. The core replication does
+not use `SHORE` as a control. The code uses `SOUTHJ`, `CENTRALJ`, `NORTHJ`, and
+`PA1` as region controls in the published-style specifications, with the
+`PA2`/Easton category as the omitted reference group. `SHORE` is used only for
+an explicitly labelled geographic-exclusion robustness check.
+
+Before submission, confirm the exact geographic definitions against the
+original paper or source codebook and reproduce that documentation in the
+empirical report. If the source codebook cannot be recovered, retain the
+robustness result as a data-provided indicator check and state this limitation
+explicitly rather than assigning an unsupported geographic interpretation.
 
 The original `SHEET` identifier is duplicated for two observations. The
 workflow preserves the raw value and creates `store_id_unique` for local
-diagnostics and future merges.
+diagnostics and future merges; no row is dropped because of the duplicate.
 
+The raw input is not committed. A clean checkout must receive the course
+provided `public.csv` through the documented input path before running the
+analysis. The generated `data/processed/analysis_panel.csv` is a local
+derived file and is ignored by Git until the researcher confirms that its
+redistribution is permitted.
