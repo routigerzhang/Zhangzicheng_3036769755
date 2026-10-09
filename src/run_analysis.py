@@ -340,6 +340,41 @@ def wage_distribution_figure(df: pd.DataFrame, path: Path):
     image.save(path)
 
 
+def replication_comparison(table3_df: pd.DataFrame, table4_df: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+
+    def add(label: str, original: float, replicated: float, note: str):
+        rows.append({
+            "result": label,
+            "original_paper": original,
+            "replicated": replicated,
+            "difference": replicated - original,
+            "note": note,
+        })
+
+    row3 = table3_df.loc[(table3_df["row"] == "3. Change in mean FTE") & (table3_df["stat"] == "estimate")].iloc[0]
+    row4 = table3_df.loc[(table3_df["row"] == "4. Change in mean FTE, balanced sample") & (table3_df["stat"] == "estimate")].iloc[0]
+    row5 = table3_df.loc[(table3_df["row"] == "5. Change in mean FTE, temporary closures set to zero") & (table3_df["stat"] == "estimate")].iloc[0]
+    add("Table 3 row 3 DiD", 2.76, float(row3["NJ-PA"]), "Unbalanced means")
+    add("Table 3 row 4 DiD", 2.75, float(row4["NJ-PA"]), "Balanced employment sample")
+    add("Table 3 row 5 DiD", 2.51, float(row5["NJ-PA"]), "Temporary closures set to zero")
+
+    mapping = [
+        ("(i) NJ dummy", "STATE", 2.33),
+        ("(ii) NJ dummy + chain/ownership", "STATE", 2.30),
+        ("(iii) GAP", "GAP", 15.65),
+        ("(iv) GAP + chain/ownership", "GAP", 14.92),
+        ("(v) GAP + chain/ownership + region", "GAP", 11.91),
+    ]
+    for model, term, original in mapping:
+        replicated = float(table4_df.loc[(table4_df["model"] == model) & (table4_df["term"] == term), "coefficient"].iloc[0])
+        note = "Published model; conventional OLS standard errors"
+        if model.startswith("(v)"):
+            note += "; small difference remains in region-control specification"
+        add(f"Table 4 {model} {term}", original, replicated, note)
+    return pd.DataFrame(rows)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Replicate Card and Krueger (1994) from public.csv.")
     parser.add_argument("--input", required=True, help="Path to the course-provided public.csv")
@@ -366,6 +401,7 @@ def main():
     table4_df, extension_df, table4_meta = table4_and_extension(df)
     table4_df.to_csv(tables_dir / "table4.csv", index=False)
     extension_df.to_csv(tables_dir / "extension_ownership_heterogeneity.csv", index=False)
+    replication_comparison(table3_df, table4_df).to_csv(tables_dir / "replication_comparison.csv", index=False)
     wage_distribution_figure(df, figures_dir / "figure1.png")
 
     status_counts = df["STATUS2"].value_counts().sort_index().to_dict()

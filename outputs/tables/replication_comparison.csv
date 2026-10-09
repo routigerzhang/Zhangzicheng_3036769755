@@ -1,0 +1,9 @@
+result,original_paper,replicated,difference,note
+Table 3 row 3 DiD,2.76,2.75,-0.009999999999999787,Unbalanced means
+Table 3 row 4 DiD,2.75,2.75,0.0,Balanced employment sample
+Table 3 row 5 DiD,2.51,2.5092119275825344,-0.0007880724174653686,Temporary closures set to zero
+Table 4 (i) NJ dummy STATE,2.33,2.325831188883181,-0.004168811116818993,Published model; conventional OLS standard errors
+Table 4 (ii) NJ dummy + chain/ownership STATE,2.3,2.303859509433308,0.0038595094333082614,Published model; conventional OLS standard errors
+Table 4 (iii) GAP GAP,15.65,15.65288957615378,0.002889576153780382,Published model; conventional OLS standard errors
+Table 4 (iv) GAP + chain/ownership GAP,14.92,14.915673959184042,-0.004326040815957555,Published model; conventional OLS standard errors
+Table 4 (v) GAP + chain/ownership + region GAP,11.91,11.979236582986777,0.06923658298677715,Published model; conventional OLS standard errors; small difference remains in region-control specification

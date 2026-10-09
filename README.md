@@ -23,6 +23,7 @@ The workflow creates:
 - `outputs/tables/table2.csv`: key means by state and survey wave;
 - `outputs/tables/table3.csv`: employment levels, changes, and DiD comparisons;
 - `outputs/tables/table4.csv`: reduced-form employment models;
+- `outputs/tables/replication_comparison.csv`: selected published-versus-replicated coefficients;
 - `outputs/tables/extension_ownership_heterogeneity.csv`: GAP interacted with company ownership;
 - `outputs/figures/figure1.png`: starting-wage distributions;
 - `outputs/tables/validation_checks.csv`: sample counts and headline checks;
@@ -65,6 +66,6 @@ sample size and two-wave design in mind.
 
 The final report should record the input source, sample rules, closure coding,
 any deviations from the original paper, and the checks used to validate the
-generated tables and figure. Add a project-specific AI-use disclosure after
+generated tables and figure. Use `docs/ai_use_disclosure_template.md` as a
+starting point, then revise it to reflect the actual project history after
 reviewing the code and results manually.
-
